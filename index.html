@@ -1,0 +1,114 @@
+
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Al-Qur'an Digital</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { darkMode: 'class' };
+  </script>
+  <link href="https://fonts.googleapis.com/css2?family=Amiri&family=Lateef&family=Noto+Naskh+Arabic&family=Scheherazade&display=swap" rel="stylesheet">
+  <style>
+    .font-arabic-1 { font-family: 'Amiri', serif; }
+    .font-arabic-2 { font-family: 'Scheherazade', serif; }
+    .font-arabic-3 { font-family: 'Lateef', serif; }
+    .font-arabic-4 { font-family: 'Noto Naskh Arabic', serif; }
+  </style>
+</head>
+<body class="bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-100">
+  <header class="relative bg-green-600 text-white py-4 text-center text-2xl font-bold">
+    <img src="LDII_logo.png" class="absolute left-4 top-2 h-12 w-12 object-contain" alt="LDII Logo">
+    القُرْآنُ الكَرِيم
+    <img src="LDII_logo.png" class="absolute right-4 top-2 h-12 w-12 object-contain" alt="LDII Logo">
+    <div class="text-sm mt-1">PAC LDII SIWALANPANJI</div>
+  </header>
+
+  <div class="text-center mt-4 flex flex-col items-center gap-2">
+    <button id="toggleMode" class="px-4 py-1 text-sm bg-gray-300 dark:bg-gray-700 rounded">Mode Malam</button>
+    <label class="text-sm mt-1">Ganti Gaya Huruf Arab:</label>
+    <select id="fontSelect" class="px-2 py-1 text-sm rounded border text-black">
+      <option value="font-arabic-1">Amiri</option>
+      <option value="font-arabic-2">Scheherazade</option>
+      <option value="font-arabic-3">Lateef</option>
+      <option value="font-arabic-4">Noto Naskh Arabic</option>
+    </select>
+  </div>
+
+  <main class="p-4 max-w-4xl mx-auto">
+    <div class="mb-6">
+      <label for="surahSelect" class="block mb-2 font-semibold">Pilih Surat:</label>
+      <select id="surahSelect" class="w-full p-2 border rounded text-black"></select>
+    </div>
+    <div id="ayatContainer" class="space-y-6"></div>
+  </main>
+
+  <footer class="bg-gray-200 dark:bg-gray-800 text-center py-4 text-sm">
+    DIBUAT OLEH PAC LDII SIWALANPANJI
+  </footer>
+
+  <script>
+    const surahSelect = document.getElementById('surahSelect');
+    const ayatContainer = document.getElementById('ayatContainer');
+    const toggleMode = document.getElementById('toggleMode');
+    const fontSelect = document.getElementById('fontSelect');
+    let currentFontClass = 'font-arabic-1';
+
+    toggleMode.addEventListener('click', () => {
+      document.documentElement.classList.toggle('dark');
+      toggleMode.textContent = document.documentElement.classList.contains('dark') ? 'Mode Siang' : 'Mode Malam';
+    });
+
+    fontSelect.addEventListener('change', () => {
+      currentFontClass = fontSelect.value;
+      updateFontClass();
+    });
+
+    function updateFontClass() {
+      const ayats = document.querySelectorAll('.arabic-text');
+      ayats.forEach(el => {
+        el.classList.remove('font-arabic-1', 'font-arabic-2', 'font-arabic-3', 'font-arabic-4');
+        el.classList.add(currentFontClass);
+      });
+    }
+
+    async function loadSurahList() {
+      const response = await fetch('https://equran.id/api/surat');
+      const data = await response.json();
+      data.forEach(surat => {
+        const option = document.createElement('option');
+        option.value = surat.nomor;
+        option.textContent = `${surat.nomor}. ${surat.nama_latin}`;
+        surahSelect.appendChild(option);
+      });
+    }
+
+    async function loadSurah(nomor) {
+      ayatContainer.innerHTML = '<p>Memuat...</p>';
+      const response = await fetch(`https://equran.id/api/surat/${nomor}`);
+      const data = await response.json();
+      const ayatList = data.ayat;
+      ayatContainer.innerHTML = '';
+      ayatList.forEach(ayat => {
+        const card = document.createElement('div');
+        card.className = 'bg-white dark:bg-gray-700 p-4 rounded shadow';
+        card.innerHTML = `
+          <p class="text-right text-2xl arabic-text ${currentFontClass}">${ayat.ar}</p>
+          <p class="mt-2 text-sm text-gray-600 dark:text-gray-300">${ayat.idn}</p>
+        `;
+        ayatContainer.appendChild(card);
+      });
+    }
+
+    surahSelect.addEventListener('change', e => {
+      loadSurah(e.target.value);
+    });
+
+    loadSurahList().then(() => {
+      surahSelect.value = '1';
+      loadSurah(1);
+    });
+  </script>
+</body>
+</html>
